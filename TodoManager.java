@@ -14,8 +14,9 @@ public class TodoManager {
             System.out.println("\n--- TO-DO MANAGER ---");
             System.out.println("1. Add Task");
             System.out.println("2. View Tasks");
-            System.out.println("3. Delete All Tasks");
-            System.out.println("4. Exit");
+            System.out.println("3. Delete Task");
+            System.out.println("4. Mark Task as Completed");
+            System.out.println("5. Exit");
             System.out.print("Enter choice: ");
 
             choice = sc.nextInt();
@@ -34,11 +35,20 @@ public class TodoManager {
                     break;
 
                 case 3:
-                    clearTasks();
-                    System.out.println("All tasks deleted.");
+                    viewTasks();
+                    System.out.print("Enter task number to delete: ");
+                    int deleteIndex = sc.nextInt();
+                    deleteTask(deleteIndex);
                     break;
 
                 case 4:
+                    viewTasks();
+                    System.out.print("Enter task number to mark complete: ");
+                    int completeIndex = sc.nextInt();
+                    markComplete(completeIndex);
+                    break;
+
+                case 5:
                     System.out.println("Exiting...");
                     break;
 
@@ -46,14 +56,14 @@ public class TodoManager {
                     System.out.println("Invalid choice!");
             }
 
-        } while (choice != 4);
+        } while (choice != 5);
 
         sc.close();
     }
 
     static void addTask(String task) {
         try (FileWriter fw = new FileWriter(FILE_NAME, true)) {
-            fw.write(task + "\n");
+            fw.write("[ ] " + task + "\n");
             System.out.println("Task added!");
         } catch (IOException e) {
             System.out.println("Error writing to file.");
@@ -75,11 +85,52 @@ public class TodoManager {
         }
     }
 
-    static void clearTasks() {
-        try (FileWriter fw = new FileWriter(FILE_NAME)) {
-            fw.write("");
+    static void deleteTask(int index) {
+        List<String> tasks = readTasks();
+
+        if (index > 0 && index <= tasks.size()) {
+            tasks.remove(index - 1);
+            writeTasks(tasks);
+            System.out.println("Task deleted!");
+        } else {
+            System.out.println("Invalid task number.");
+        }
+    }
+
+    static void markComplete(int index) {
+        List<String> tasks = readTasks();
+
+        if (index > 0 && index <= tasks.size()) {
+            String task = tasks.get(index - 1);
+            task = task.replace("[ ]", "[✔]");
+            tasks.set(index - 1, task);
+            writeTasks(tasks);
+            System.out.println("Task marked as completed!");
+        } else {
+            System.out.println("Invalid task number.");
+        }
+    }
+
+    static List<String> readTasks() {
+        List<String> tasks = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(FILE_NAME))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                tasks.add(line);
+            }
         } catch (IOException e) {
-            System.out.println("Error clearing file.");
+            // ignore
+        }
+        return tasks;
+    }
+
+    static void writeTasks(List<String> tasks) {
+        try (FileWriter fw = new FileWriter(FILE_NAME)) {
+            for (String t : tasks) {
+                fw.write(t + "\n");
+            }
+        } catch (IOException e) {
+            System.out.println("Error updating file.");
         }
     }
 }
