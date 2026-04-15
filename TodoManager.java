@@ -1,6 +1,6 @@
 import java.io.*;
 import java.util.*;
-
+// Simple To-Do List Manager in Java
 public class TodoManager {
 
     static final String FILE_NAME = "tasks.txt";
@@ -110,6 +110,7 @@ public class TodoManager {
             System.out.println("Invalid task number.");
         }
     }
+// Helper methods to read and write tasks from/to the file
 
     static List<String> readTasks() {
         List<String> tasks = new ArrayList<>();
@@ -119,7 +120,6 @@ public class TodoManager {
                 tasks.add(line);
             }
         } catch (IOException e) {
-            // ignore
         }
         return tasks;
     }
