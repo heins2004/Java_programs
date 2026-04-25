@@ -1,10 +1,11 @@
-import java.util.HashMap;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
 public class URLShortener {
 
-    static HashMap<String, String> map = new HashMap<>();
+    static HashMap<String, String> shortToLong = new HashMap<>();
+    static HashMap<String, String> longToShort = new HashMap<>();
+    static HashMap<String, Integer> clickCount = new HashMap<>();
+
     static String chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     static Random rand = new Random();
 
@@ -17,7 +18,8 @@ public class URLShortener {
             System.out.println("\n--- URL SHORTENER ---");
             System.out.println("1. Shorten URL");
             System.out.println("2. Retrieve Original URL");
-            System.out.println("3. Exit");
+            System.out.println("3. View Analytics");
+            System.out.println("4. Exit");
             System.out.print("Enter choice: ");
 
             choice = sc.nextInt();
@@ -28,22 +30,66 @@ public class URLShortener {
                 case 1:
                     System.out.print("Enter long URL: ");
                     String longUrl = sc.nextLine();
-                    String shortUrl = generateShortURL();
-                    map.put(shortUrl, longUrl);
-                    System.out.println("Short URL: " + shortUrl);
+
+                    System.out.print("Custom alias? (yes/no): ");
+                    String option = sc.nextLine();
+
+                    String shortUrl;
+
+                    if (longToShort.containsKey(longUrl)) {
+                        shortUrl = longToShort.get(longUrl);
+                        System.out.println("Already shortened: " + shortUrl);
+                    } 
+                    else {
+                        if (option.equalsIgnoreCase("yes")) {
+                            System.out.print("Enter custom alias: ");
+                            shortUrl = sc.nextLine();
+
+                            if (shortToLong.containsKey(shortUrl)) {
+                                System.out.println("Alias already taken!");
+                                break;
+                            }
+                        } 
+                        else {
+                            shortUrl = generateShortURL();
+                            while (shortToLong.containsKey(shortUrl)) {
+                                shortUrl = generateShortURL();
+                            }
+                        }
+
+                        shortToLong.put(shortUrl, longUrl);
+                        longToShort.put(longUrl, shortUrl);
+                        clickCount.put(shortUrl, 0);
+
+                        System.out.println("Short URL: " + shortUrl);
+                    }
                     break;
 
                 case 2:
                     System.out.print("Enter short URL: ");
                     String key = sc.nextLine();
-                    if (map.containsKey(key)) {
-                        System.out.println("Original URL: " + map.get(key));
+
+                    if (shortToLong.containsKey(key)) {
+                        System.out.println("Original URL: " + shortToLong.get(key));
+
+                        // increase click count
+                        clickCount.put(key, clickCount.get(key) + 1);
                     } else {
                         System.out.println("URL not found.");
                     }
                     break;
 
                 case 3:
+                    System.out.println("\n--- Analytics ---");
+                    for (String k : shortToLong.keySet()) {
+                        System.out.println(
+                            "Short: " + k +
+                            " | Clicks: " + clickCount.get(k)
+                        );
+                    }
+                    break;
+
+                case 4:
                     System.out.println("Exiting...");
                     break;
 
@@ -51,7 +97,7 @@ public class URLShortener {
                     System.out.println("Invalid choice!");
             }
 
-        } while (choice != 3);
+        } while (choice != 4);
 
         sc.close();
     }
