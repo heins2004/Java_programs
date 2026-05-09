@@ -1,86 +1,150 @@
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.Random;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
-class SharedBuffer {
-    private Queue<Integer> buffer = new LinkedList<>();
-    private int capacity;
+class Producer implements Runnable {
 
-    public SharedBuffer(int capacity) {
-        this.capacity = capacity;
+    private BlockingQueue<Integer> queue;
+    private AtomicInteger producedCount;
+    private static AtomicInteger idGenerator = new AtomicInteger(1);
+
+    public Producer(BlockingQueue<Integer> queue,
+                    AtomicInteger producedCount) {
+
+        this.queue = queue;
+        this.producedCount = producedCount;
     }
 
-    public synchronized void produce(int value) throws InterruptedException {
-        while (buffer.size() == capacity) {
-            wait(); // wait if buffer full
-        }
-
-        buffer.add(value);
-        System.out.println("Produced: " + value);
-
-        notify(); // notify consumer
-    }
-
-    public synchronized void consume() throws InterruptedException {
-        while (buffer.isEmpty()) {
-            wait(); // wait if buffer empty
-        }
-
-        int value = buffer.poll();
-        System.out.println("Consumed: " + value);
-
-        notify(); // notify producer
-    }
-}
-
-class Producer extends Thread {
-    private SharedBuffer buffer;
-
-    public Producer(SharedBuffer buffer) {
-        this.buffer = buffer;
-    }
-
+    @Override
     public void run() {
-        int i = 1;
+
+        Random rand = new Random();
+
         try {
             while (true) {
-                buffer.produce(i++);
-                Thread.sleep(500);
+
+                int item = idGenerator.getAndIncrement();
+
+                queue.put(item);
+
+                producedCount.incrementAndGet();
+
+                System.out.println(
+                        Thread.currentThread().getName() +
+                        " PRODUCED -> " + item +
+                        " | Queue: " + queue
+                );
+
+                Thread.sleep(rand.nextInt(1000) + 500);
             }
+
         } catch (InterruptedException e) {
-            System.out.println("Producer stopped.");
+
+            System.out.println(
+                    Thread.currentThread().getName() +
+                    " stopped."
+            );
         }
     }
 }
 
-class Consumer extends Thread {
-    private SharedBuffer buffer;
+class Consumer implements Runnable {
 
-    public Consumer(SharedBuffer buffer) {
-        this.buffer = buffer;
+    private BlockingQueue<Integer> queue;
+    private AtomicInteger consumedCount;
+
+    public Consumer(BlockingQueue<Integer> queue,
+                    AtomicInteger consumedCount) {
+
+        this.queue = queue;
+        this.consumedCount = consumedCount;
     }
 
+    @Override
     public void run() {
+
+        Random rand = new Random();
+
         try {
             while (true) {
-                buffer.consume();
-                Thread.sleep(800);
+
+                int item = queue.take();
+
+                consumedCount.incrementAndGet();
+
+                System.out.println(
+                        Thread.currentThread().getName() +
+                        " CONSUMED -> " + item +
+                        " | Queue: " + queue
+                );
+
+                Thread.sleep(rand.nextInt(1500) + 700);
             }
+
         } catch (InterruptedException e) {
-            System.out.println("Consumer stopped.");
+
+            System.out.println(
+                    Thread.currentThread().getName() +
+                    " stopped."
+            );
         }
     }
 }
 
 public class ProducerConsumerDemo {
 
-    public static void main(String[] args) {
+    public static void main(String[] args)
+            throws InterruptedException {
 
-        SharedBuffer buffer = new SharedBuffer(5);
+        BlockingQueue<Integer> queue =
+                new ArrayBlockingQueue<>(5);
 
-        Producer p = new Producer(buffer);
-        Consumer c = new Consumer(buffer);
+        AtomicInteger producedCount =
+                new AtomicInteger(0);
 
-        p.start();
-        c.start();
+        AtomicInteger consumedCount =
+                new AtomicInteger(0);
+
+        ExecutorService executor =
+                Executors.newFixedThreadPool(4);
+
+        // Start Producers
+        executor.execute(
+                new Producer(queue, producedCount)
+        );
+
+        executor.execute(
+                new Producer(queue, producedCount)
+        );
+
+        // Start Consumers
+        executor.execute(
+                new Consumer(queue, consumedCount)
+        );
+
+        executor.execute(
+                new Consumer(queue, consumedCount)
+        );
+
+        // Run system
+        Thread.sleep(15000);
+
+        // Shutdown
+        executor.shutdownNow();
+
+        executor.awaitTermination(5, TimeUnit.SECONDS);
+
+        System.out.println("\n=== SYSTEM REPORT ===");
+        System.out.println(
+                "Total Produced: " +
+                producedCount.get()
+        );
+
+        System.out.println(
+                "Total Consumed: " +
+                consumedCount.get()
+        );
+
+        System.out.println("System shutdown complete.");
     }
 }
