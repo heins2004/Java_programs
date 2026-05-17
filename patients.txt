@@ -1,0 +1,27 @@
+
+===== PRESCRIPTION =====
+Patient ID : 102
+Name       : Aman
+Age        : 40
+Disease    : Surgery
+========================
+Bill Amount : 5800.0
+
+
+===== PRESCRIPTION =====
+Patient ID : 101
+Name       : Rahul
+Age        : 25
+Disease    : Fever
+========================
+Bill Amount : 800.0
+
+
+===== PRESCRIPTION =====
+Patient ID : 1
+Name       : dcds
+Age        : 33
+Disease    : cvfbf
+========================
+Bill Amount : 5100.0
+
