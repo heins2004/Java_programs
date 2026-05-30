@@ -17,16 +17,17 @@ class Student extends User {
     private int studentId;
     private String name;
     private int marks;
+    private double attendance;
     protected String course;
 
     Student(int studentId,
             String name,
             int marks,
-            String course)
+            String course,
+            double attendance)
             throws InvalidMarksException {
 
         if(marks < 0 || marks > 100) {
-
             throw new InvalidMarksException(
                     "Invalid marks entered"
             );
@@ -36,6 +37,7 @@ class Student extends User {
         this.name = name;
         this.marks = marks;
         this.course = course;
+        this.attendance = attendance;
     }
 
     double calculateGradePoint() {
@@ -46,14 +48,43 @@ class Student extends User {
         return (marks / 10.0) + bonus;
     }
 
+    String getGrade() {
+
+        if(marks >= 90)
+            return "A";
+        else if(marks >= 75)
+            return "B";
+        else if(marks >= 60)
+            return "C";
+        else if(marks >= 50)
+            return "D";
+        else
+            return "F";
+    }
+
+    String getResult() {
+
+        if(marks >= 50 && attendance >= 75)
+            return "PASS";
+        else
+            return "FAIL";
+    }
+
+    int getMarks() {
+        return marks;
+    }
+
     String studentDetails() {
 
-        return "\n===== STUDENT DETAILS =====" +
+        return "\n===== STUDENT REPORT =====" +
                 "\nStudent ID : " + studentId +
                 "\nName       : " + name +
                 "\nMarks      : " + marks +
+                "\nAttendance : " + attendance + "%" +
                 "\nCourse     : " + course +
-                "\n============================";
+                "\nGrade      : " + getGrade() +
+                "\nResult     : " + getResult() +
+                "\n==========================";
     }
 
     void userType() {
@@ -69,10 +100,15 @@ class ScholarshipStudent extends Student {
                        String name,
                        int marks,
                        String course,
+                       double attendance,
                        double scholarshipAmount)
             throws InvalidMarksException {
 
-        super(studentId,name,marks,course);
+        super(studentId,
+              name,
+              marks,
+              course,
+              attendance);
 
         this.scholarshipAmount =
                 scholarshipAmount;
@@ -120,7 +156,7 @@ class SaveThread extends Thread {
             fw.close();
 
             System.out.println(
-                    "Student data saved"
+                    "Student record saved"
             );
         }
 
@@ -130,11 +166,11 @@ class SaveThread extends Thread {
     }
 }
 
-class PerformanceThread extends Thread {
+class AnalysisThread extends Thread {
 
     Student s;
 
-    PerformanceThread(Student s) {
+    AnalysisThread(Student s) {
         this.s = s;
     }
 
@@ -145,7 +181,7 @@ class PerformanceThread extends Thread {
             for(int i = 1; i <= 3; i++) {
 
                 System.out.println(
-                        "Analyzing performance for course: "
+                        "Analyzing performance of "
                                 + s.course
                 );
 
@@ -190,21 +226,44 @@ public class StudentPortalSystem {
                 int id = sc.nextInt();
                 sc.nextLine();
 
-                System.out.print("Name: ");
-                String name = sc.nextLine();
+                System.out.print(
+                        "Name: "
+                );
 
-                System.out.print("Marks: ");
-                int marks = sc.nextInt();
+                String name =
+                        sc.nextLine();
+
+                System.out.print(
+                        "Marks: "
+                );
+
+                int marks =
+                        sc.nextInt();
+
                 sc.nextLine();
 
-                System.out.print("Course: ");
-                String course = sc.nextLine();
+                System.out.print(
+                        "Course: "
+                );
+
+                String course =
+                        sc.nextLine();
+
+                System.out.print(
+                        "Attendance (%): "
+                );
+
+                double attendance =
+                        sc.nextDouble();
+
+                sc.nextLine();
 
                 System.out.print(
                         "Scholarship Student? (yes/no): "
                 );
 
-                String type = sc.nextLine();
+                String type =
+                        sc.nextLine();
 
                 if(type.equalsIgnoreCase("yes")) {
 
@@ -223,6 +282,7 @@ public class StudentPortalSystem {
                                     name,
                                     marks,
                                     course,
+                                    attendance,
                                     amount
                             );
                 }
@@ -234,10 +294,14 @@ public class StudentPortalSystem {
                                     id,
                                     name,
                                     marks,
-                                    course
+                                    course,
+                                    attendance
                             );
                 }
             }
+
+            Student topper =
+                    students[0];
 
             for(Student s : students) {
 
@@ -258,7 +322,7 @@ public class StudentPortalSystem {
                 }
 
                 System.out.println(
-                        "Final Grade Point : "
+                        "Grade Point : "
                                 + gp
                 );
 
@@ -268,18 +332,49 @@ public class StudentPortalSystem {
                                 gp
                         );
 
-                PerformanceThread pt =
-                        new PerformanceThread(s);
+                AnalysisThread at =
+                        new AnalysisThread(
+                                s
+                        );
 
                 st.start();
-                pt.start();
+                at.start();
+
+                if(s.getMarks() >
+                        topper.getMarks()) {
+
+                    topper = s;
+                }
             }
+
+            FileWriter fw =
+                    new FileWriter(
+                            "topper.txt"
+                    );
+
+            fw.write(
+                    "===== TOPPER REPORT =====\n"
+            );
+
+            fw.write(
+                    topper.studentDetails()
+            );
+
+            fw.close();
+
+            System.out.println(
+                    "\nTopper report saved successfully."
+            );
 
             sc.close();
         }
 
         catch(Exception e) {
-            System.out.println(e);
+
+            System.out.println(
+                    "Error: "
+                            + e.getMessage()
+            );
         }
     }
 }
