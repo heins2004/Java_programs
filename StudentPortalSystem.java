@@ -6,7 +6,6 @@ abstract class User {
 }
 
 class InvalidMarksException extends Exception {
-
     InvalidMarksException(String msg) {
         super(msg);
     }
@@ -29,7 +28,7 @@ class Student extends User {
 
         if(marks < 0 || marks > 100) {
             throw new InvalidMarksException(
-                    "Invalid marks entered"
+                    "Marks should be between 0 and 100"
             );
         }
 
@@ -38,6 +37,14 @@ class Student extends User {
         this.marks = marks;
         this.course = course;
         this.attendance = attendance;
+    }
+
+    int getMarks() {
+        return marks;
+    }
+
+    String getName() {
+        return name;
     }
 
     double calculateGradePoint() {
@@ -66,12 +73,8 @@ class Student extends User {
 
         if(marks >= 50 && attendance >= 75)
             return "PASS";
-        else
-            return "FAIL";
-    }
 
-    int getMarks() {
-        return marks;
+        return "FAIL";
     }
 
     String studentDetails() {
@@ -105,10 +108,10 @@ class ScholarshipStudent extends Student {
             throws InvalidMarksException {
 
         super(studentId,
-              name,
-              marks,
-              course,
-              attendance);
+                name,
+                marks,
+                course,
+                attendance);
 
         this.scholarshipAmount =
                 scholarshipAmount;
@@ -127,12 +130,14 @@ class ScholarshipStudent extends Student {
 
 class SaveThread extends Thread {
 
-    Student s;
-    double gp;
+    Student student;
+    double gradePoint;
 
-    SaveThread(Student s,double gp) {
-        this.s = s;
-        this.gp = gp;
+    SaveThread(Student student,
+               double gradePoint) {
+
+        this.student = student;
+        this.gradePoint = gradePoint;
     }
 
     public void run() {
@@ -145,10 +150,13 @@ class SaveThread extends Thread {
                             true
                     );
 
-            fw.write(s.studentDetails());
+            fw.write(
+                    student.studentDetails()
+            );
 
             fw.write(
-                    "\nGrade Point : " + gp
+                    "\nGrade Point : "
+                            + gradePoint
             );
 
             fw.write("\n\n");
@@ -156,7 +164,7 @@ class SaveThread extends Thread {
             fw.close();
 
             System.out.println(
-                    "Student record saved"
+                    "Student data saved"
             );
         }
 
@@ -168,10 +176,10 @@ class SaveThread extends Thread {
 
 class AnalysisThread extends Thread {
 
-    Student s;
+    Student student;
 
-    AnalysisThread(Student s) {
-        this.s = s;
+    AnalysisThread(Student student) {
+        this.student = student;
     }
 
     public void run() {
@@ -181,8 +189,8 @@ class AnalysisThread extends Thread {
             for(int i = 1; i <= 3; i++) {
 
                 System.out.println(
-                        "Analyzing performance of "
-                                + s.course
+                        "Analyzing "
+                                + student.getName()
                 );
 
                 Thread.sleep(1000);
@@ -303,6 +311,10 @@ public class StudentPortalSystem {
             Student topper =
                     students[0];
 
+            int passCount = 0;
+            int failCount = 0;
+            int totalMarks = 0;
+
             for(Student s : students) {
 
                 s.userType();
@@ -340,12 +352,50 @@ public class StudentPortalSystem {
                 st.start();
                 at.start();
 
-                if(s.getMarks() >
-                        topper.getMarks()) {
+                totalMarks +=
+                        s.getMarks();
 
+                if(
+                        s.getResult()
+                                .equals("PASS")
+                ) {
+                    passCount++;
+                }
+
+                else {
+                    failCount++;
+                }
+
+                if(
+                        s.getMarks()
+                                >
+                                topper.getMarks()
+                ) {
                     topper = s;
                 }
             }
+
+            double average =
+                    (double) totalMarks / n;
+
+            System.out.println(
+                    "\n===== SUMMARY ====="
+            );
+
+            System.out.println(
+                    "Average Marks : "
+                            + average
+            );
+
+            System.out.println(
+                    "Pass Count    : "
+                            + passCount
+            );
+
+            System.out.println(
+                    "Fail Count    : "
+                            + failCount
+            );
 
             FileWriter fw =
                     new FileWriter(
@@ -363,7 +413,7 @@ public class StudentPortalSystem {
             fw.close();
 
             System.out.println(
-                    "\nTopper report saved successfully."
+                    "\nTopper Report Saved"
             );
 
             sc.close();
@@ -372,7 +422,7 @@ public class StudentPortalSystem {
         catch(Exception e) {
 
             System.out.println(
-                    "Error: "
+                    "Error : "
                             + e.getMessage()
             );
         }
