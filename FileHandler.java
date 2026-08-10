@@ -13,10 +13,6 @@ public class FileHandler {
             writer.write("You can store and read data easily.");
             writer.close();
 
-            System.out.println("Data written to file.");
-            Scanner reader = new Scanner(file);
-            System.out.println("\nReading from file:");
-
             while (reader.hasNextLine()) {
                 System.out.println(reader.nextLine());
             }
